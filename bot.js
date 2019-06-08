@@ -40,21 +40,22 @@ function sendRandomItem(partner) {
 				const theirItem = theirInv[Math.floor(Math.random() * theirInv.length - 1)];
 				offer.addTheirItem(theirItem);
 				offer.setMessage(`Думаю тебе понравиться мой ${myItem.name} за твой ${theirItem.name}.`);
-				offer.send((err, status) => { if (err) { console.log(err); } else { console.log(`Sent a random item offer. Status: ${status}.`); } });
+				console.log(myItem);
+				offer.send((err, status) => { if (err) { console.log(err); } else { console.log(`Sent a random item offer. Status: ${status}.`); }});
 			  }});}});
 }
 function acceptOffer(offer,reason,status) {
 	offer.accept((err) => {
 		if (err) console.log("Error occured:" + err)
 		else
-		console.log(`Accepted offer successfully. Status: ${status}. Reason: ${reason}`.green);
+		console.log(`Accepted offer successfully. Status: ${status}. Reason: ${reason}`);
 	});
 };
 function declineOffer(offer,reason,status) {
 	offer.decline((err) => {
 		if (err) console.log("Error occured:" + err);
 		else
-		console.log(`Declined offer successfully. Status: ${status}. Reason: ${reason}`.red);
+		console.log(`Declined offer successfully. Status: ${status}. Reason: ${reason}`);
 	});
 };
 function processOffer(offer){
@@ -69,16 +70,29 @@ function processOffer(offer){
 		for (var i in ourItems) {
 //WIP			var item = ourItems[i]. 
 		}
-	}
+	}	
 };
 function sqlconnect(){
 	try {
 		con.connect(function(err) {
-		if (err) throw err;
-		console.log("Connected to SQL database server!");
+			if (err) throw err
+			console.log("Connected to SQL database server!");
 		});
-	} catch(e) { console.log("Didn't connected to SQL!"); };
+	}
+	catch(e){ console.log('Error happened');}
 };
+function items_receive(offer){
+	console.log('Received:');
+	offer.itemsToReceive.forEach(function(item) {
+		console.log("Name: " + item.market_name + "   Quality:" + item.app_data.quality);
+	});
+}
+function items_give(offer){
+	console.log('Gived:');
+	offer.itemsToGive.forEach(function(item) {
+		console.log("Name: " + item.market_name + "   Quality:" + item.app_data.quality);
+	});
+}
 //----------------------------------------------------------------
 
 client.logOn(logOnOptions);
@@ -97,10 +111,14 @@ client.on('webSession', (sessionid, cookies) => {
   console.log(`Connected to Steam community. Started Confirmations checker every ${timech} ms`);
 });
 
-setTimeout(sqlconnect,4000);
+setTimeout(sqlconnect, 1000);
 
 manager.on('newOffer', offer => {
-  if (offer.partner.getSteamID64() === config.botOwner) { acceptOffer(offer,"Bot owner",offer.status); console.log(offer.itemsToReceive[1].EconItem.name);}    
+  if (offer.partner.getSteamID64() === config.botOwner) { 
+	acceptOffer(offer,"Bot owner",offer.status);  
+	items_receive(offer);
+	items_give(offer);
+  }
 	});
 
 
@@ -109,20 +127,19 @@ client.on("friendMessage", function(steamID, message) {
 		case '!randomisgood':
 		{
 			client.chatMessage(steamID, "Agree! :3");
-			sendRandomItem(steamID)
+			try{ sendRandomItem(steamID)} catch(e) {client.chatMessage(partner,'Your item has incorrect symbols in the name... Please, consider renaming it');}
 		}; break;
-		/*case '!db check':
+		case '!db check':
 		{
 			con.query("select * from prices;", function (err, result) {
 				if (err) throw err;
-			try {client.chatMessage(steamID, result[3].item_name); } catch(MessErr){ client.chatMessage(steamID, 'end of the table'); };
+			try {client.chatMessage(steamID, result[1].item_name); } catch(e){ client.chatMessage(steamID, 'end of the table'); };
 				console.log(steamID + " checked database");
 			});
-		}*/
+		}
 	
 	}
 });
-
 
 
 
