@@ -1,5 +1,5 @@
 @echo off
-title SteamBot - Void
+title SteamBot - SteamBot
 node bot.js
 @echo on
 pause
