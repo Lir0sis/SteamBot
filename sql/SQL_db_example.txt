@@ -1,0 +1,23 @@
+SET NAMES utf8;
+SET time_zone = '+00:00';
+SET foreign_key_checks = 0;
+SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
+
+DROP DATABASE IF EXISTS `your_database_name`;
+CREATE DATABASE `your_database_name` /*!40100 DEFAULT CHARACTER SET utf8 */;
+USE `your_database_name`;
+
+DROP TABLE IF EXISTS `your_table_prices`;
+CREATE TABLE `your_table_prices` (
+  `item_id` int(11) NOT NULL,
+  `item_name` varchar(60) NOT NULL,
+  `price_ref_buy` float NOT NULL,
+  `price_ref_sell` float NOT NULL,
+  `price_key_buy` float NOT NULL,
+  `price_key_sell` float NOT NULL,
+  `item_name_color` varchar(8) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `your_table_prices` (`item_id`, `item_name`, `price_ref_buy`, `price_ref_sell`, `price_key_buy`, `price_key_sell`, `item_name_color`) VALUES
+(5000,	'Scrap Metal',	0.11,	0.11,	0,	0,	''),
+(5001,	'Reclaimed Metal',	0.33,	0.33,	0,	0,	'');

@@ -1,0 +1,12 @@
+{
+	"username":"steam_username",
+	"password":"steam_password",
+	"sharedSecret":"steam_sharedSecret",
+	"identitySecret":"steam_identitySecret",
+	"botOwner":"owner_steamID64",
+	"dbSQL":"sql_databaseName",
+	"ipSQL":"sql_serverIP",
+	"userSQL":"sql_username",
+	"passSQL":"sql_password",
+	"portSQL":"port"
+}
