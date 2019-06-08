@@ -70,15 +70,22 @@ function processOffer(offer){
 //WIP			var item = ourItems[i]. 
 		}
 	}
-	
+};
+function sqlconnect(){
+	try {
+		con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected to SQL database server!");
+		});
+	} catch(e) { console.log("Didn't connected to SQL!"); };
 };
 //----------------------------------------------------------------
 
 client.logOn(logOnOptions);
 
 client.on('loggedOn', () => {
-	client.setPersona(SteamUser.EPersonaState.Online);
-	client.gamesPlayed(['Trading',440]);
+	client.setPersona(SteamUser.EPersonaState.Offline);
+	//client.gamesPlayed(['Trading',440]);
 	console.log(`Logged in Steam account!`);
 });
 
@@ -90,13 +97,10 @@ client.on('webSession', (sessionid, cookies) => {
   console.log(`Connected to Steam community. Started Confirmations checker every ${timech} ms`);
 });
 
-con.connect(function(err) {
-	if (err) throw err;
-	console.log("Connected to SQL database server!");
-});
+setTimeout(sqlconnect,4000);
 
 manager.on('newOffer', offer => {
-  if (offer.partner.getSteamID64() === config.botOwner) { acceptOffer(offer,"Bot owner",offer.status); }    
+  if (offer.partner.getSteamID64() === config.botOwner) { acceptOffer(offer,"Bot owner",offer.status); console.log(offer.itemsToReceive[1].EconItem.name);}    
 	});
 
 
