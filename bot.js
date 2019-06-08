@@ -17,6 +17,7 @@ const con = mysql.createConnection({
 	user: config.userSQL,
 	password: config.passSQL,
 	database: config.dbSQL,
+	port: config.portSQL
 });
 const logOnOptions = {
 	accountName: config.username,
