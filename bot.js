@@ -104,6 +104,31 @@ function items_give(offer){
 		console.log("Name: " + item.market_name + "   Quality:" + item.app_data.quality);
 	});
 };
+
+// const glue_sep_arr = (&array, separator) => {
+
+const glue_sep_arr = (array, separator) => {
+	const filt_arr = array.filter(item => {
+		return item.indexOf(separator) !== -1
+	});
+	let lastIndex = array.indexOf(filt_arr[filt_arr.length-1]);
+	let removed_arr = array.slice(3, lastIndex+1);
+	let removed_arr_end = array.slice(lastIndex+1,array.length);
+	let removed_arr_begin = array.slice(0,3);
+	let string_arr = removed_arr.join(" ");
+	let new_arr=[];
+	Array.prototype.push.apply(new_arr, removed_arr_begin);
+	new_arr.push(string_arr.slice(1,string_arr.length-1));
+	Array.prototype.push.apply(new_arr, removed_arr_end);
+	console.log(array);
+	return new_arr;
+};
+/*
+var positiveArr = arr.filter(function(number) {
+  return number > 0;
+});
+
+*/
 //----------------------------------------------------------------
 
 client.logOn(logOnOptions);
@@ -145,46 +170,37 @@ client.on("friendMessage", function(steamID, message) {
 			try {client.chatMessage(steamID, result[1]); } catch(e){ client.chatMessage(steamID, 'end of the table'); };
 				console.log(steamID + " checked database");
 			});
-		};break;
-		case:
-		{
-			client.chatMessage(steamID, commandArr.join('/'));
-			commandArr.forEach(function(command_item){
-				client.chatMessage(steamID, command_item);
-			});
-			console.log(commandArr + " " + commandArr.length);
-		}*/
+		};break;*/
 		case '!bot':
 		{
-			//if ()
 			switch(commandArr[1]){
 				case 'prices':{
 					con.query("select * from prices;", function (err, result) {
 						if (err) throw err;
 						result.forEach(function(price){
-							client.chatMessage(steamID, '/code ' + price.item_name + '(' + price.item_id + '): Buying for ' + price.price_key_buy + ' key ' + price.price_ref_buy + ' ref / Selling for ' + price.price_key_sell + ' key ' + price.price_ref_sell + ' ref');
+							client.chatMessage(steamID, '/code ' + price.item_name + '(' + price.item_id + '): Buying for ' + price.key_buy + ' key ' + price.ref_buy + ' ref / Selling for ' + price.key_sell + ' key ' + price.ref_sell + ' ref');
 						});
 					});
 				};break;
 				case 'add':{
-					if (commandArr.length == 2){
-						client.chatMessage(steamID, '/code How to: !bot add <table> ');
-						client.chatMessage(steamID, '/code Example: !bot add prices ... ');
-						con.query("select * from prices;", function (err, result) {
-							if (err) throw err;
-							console.log(result);
-						});
-					};
+					if (commandArr.length == 2){ client.chatMessage(steamID, '/code How to: !bot add <table> '); client.chatMessage(steamID, '/code Example: !bot add prices ... '); };
 					if (commandArr[2] == 'prices'){
+						if (commandArr.indexOf("'") !== -1) {
+							commandArr = glue_sep_arr(commandArr,"'");
+						};
 						if (commandArr.length == 3){ 
-							client.chatMessage(steamID, '/code How to: !bot add prices <item_name> <item_id> <price_ref_buy> <price_ref_sell> <price_key_buy> <price_key_sell> <item_name_color> <...>');
-						}; /*else if(commandArr.length > 3) {
+							client.chatMessage(steamID, '/code How to: !bot add prices <item_name> <item_id> <ref_buy> <ref_sell> <key_buy> <key_sell> <item_name_color> <...>');
+							client.chatMessage(steamID, '/code Example: !bot add prices \'Mann Co. Supply Crate Key\' 5021 51.55 51.77 0 0 0 ');
+						} else if(commandArr.length > 9) {
 							//INSERT into prices (item_name,price_refb,price_keyb,price_refs,price_keys,id) values ('name',prb,prs,pkb,pks,id,namecolor);
-							con.query("INSERT into prices (item_name,item_id,) values ('name',prb,prs,pkb,pks,id,namecolor);", function (err, result) {
+							con.query("INSERT into prices (item_name,item_id,ref_buy,ref_sell,key_buy,key_sell,item_name_color) values ('"+ commandArr[3] +"',"+ commandArr[4] +","+ commandArr[5] +","+ commandArr[6] +","+ commandArr[7] +","+ commandArr[8] +","+ commandArr[9]+");", function (err, result) {
 								if (err) throw err;
-								
-							}
-						};*/
+								client.chatMessage(steamID,'/pre Added a record to the table prices.');
+							});
+						};
+						if (commandArr.length <10 && commandArr.length >3){
+							client.chatMessage(steamID,'/pre Not enough arguments.');
+						}
 					};
 				};break;
 			};
