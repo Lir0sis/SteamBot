@@ -42,8 +42,19 @@ function sendRandomItem(partner) {
 				offer.setMessage(`Думаю тебе понравиться мой ${myItem.name} за твой ${theirItem.name}.`);
 				console.log(myItem);
 				offer.send((err, status) => { if (err) { console.log(err); } else { console.log(`Sent a random item offer. Status: ${status}.`); }});
-			  }});}});
-}
+			  }});
+		}});
+};
+function checkItem(steamid,appid,contextid,myItem){
+	manager.loadUserInventory(steamid, appid, contextid, true, (err, theirInv) => {
+			if (err) {
+				console.log(err);
+			} else {
+				const theirItem = theirInv[myItem];
+				offer.addTheirItem(theirItem);
+				offer.send((err, status) => { if (err) { console.log(err); } else { console.log(`Sent a random item offer. Status: ${status}.`); }});
+			  }});
+};
 function acceptOffer(offer,reason,status) {
 	offer.accept((err) => {
 		if (err) console.log("Error occured:" + err)
@@ -63,12 +74,12 @@ function processOffer(offer){
 		declineOffer(offer,'Glitched',offer.status);
 	} else if (offer.partner.getSteamID64() === config.botOwner) { acceptOffer(offer,"Bot owner",offer.status); }
 	else {
-		var ourItems = offer.itemsToGive;
-		var theirItems = offer.itemsToReceive;
-		var ourValue = 0;
-		var theirValue = 0;
-		for (var i in ourItems) {
-//WIP			var item = ourItems[i]. 
+		let ourItems = offer.itemsToGive;
+		let theirItems = offer.itemsToReceive;
+		let ourValue = 0;
+		let theirValue = 0;
+		for (let i in ourItems) {
+//WIP			let item = ourItems[i]. 
 		}
 	}	
 };
@@ -86,13 +97,13 @@ function items_receive(offer){
 	offer.itemsToReceive.forEach(function(item) {
 		console.log("Name: " + item.market_name + "   Quality:" + item.app_data.quality);
 	});
-}
+};
 function items_give(offer){
 	console.log('Gived:');
 	offer.itemsToGive.forEach(function(item) {
 		console.log("Name: " + item.market_name + "   Quality:" + item.app_data.quality);
 	});
-}
+};
 //----------------------------------------------------------------
 
 client.logOn(logOnOptions);
@@ -118,26 +129,66 @@ manager.on('newOffer', offer => {
 	acceptOffer(offer,"Bot owner",offer.status);  
 	items_receive(offer);
 	items_give(offer);
+	console.log(offer.itemsToReceive);
   }
 	});
 
 
 client.on("friendMessage", function(steamID, message) {
-	switch(message){
-		case '!randomisgood':
-		{
-			client.chatMessage(steamID, "Agree! :3");
-			try{ sendRandomItem(steamID)} catch(e) {client.chatMessage(partner,'Your item has incorrect symbols in the name... Please, consider renaming it');}
-		}; break;
-		case '!db check':
+	let commandArr = [];
+	commandArr = message.split(" ");
+	switch(commandArr[0]){
+		/*case '!db check':
 		{
 			con.query("select * from prices;", function (err, result) {
 				if (err) throw err;
-			try {client.chatMessage(steamID, result[1].item_name); } catch(e){ client.chatMessage(steamID, 'end of the table'); };
+			try {client.chatMessage(steamID, result[1]); } catch(e){ client.chatMessage(steamID, 'end of the table'); };
 				console.log(steamID + " checked database");
 			});
-		}
-	
+		};break;
+		case:
+		{
+			client.chatMessage(steamID, commandArr.join('/'));
+			commandArr.forEach(function(command_item){
+				client.chatMessage(steamID, command_item);
+			});
+			console.log(commandArr + " " + commandArr.length);
+		}*/
+		case '!bot':
+		{
+			//if ()
+			switch(commandArr[1]){
+				case 'prices':{
+					con.query("select * from prices;", function (err, result) {
+						if (err) throw err;
+						result.forEach(function(price){
+							client.chatMessage(steamID, '/code ' + price.item_name + '(' + price.item_id + '): Buying for ' + price.price_key_buy + ' key ' + price.price_ref_buy + ' ref / Selling for ' + price.price_key_sell + ' key ' + price.price_ref_sell + ' ref');
+						});
+					});
+				};break;
+				case 'add':{
+					if (commandArr.length == 2){
+						client.chatMessage(steamID, '/code How to: !bot add <table> ');
+						client.chatMessage(steamID, '/code Example: !bot add prices ... ');
+						con.query("select * from prices;", function (err, result) {
+							if (err) throw err;
+							console.log(result);
+						});
+					};
+					if (commandArr[2] == 'prices'){
+						if (commandArr.length == 3){ 
+							client.chatMessage(steamID, '/code How to: !bot add prices <item_name> <item_id> <price_ref_buy> <price_ref_sell> <price_key_buy> <price_key_sell> <item_name_color> <...>');
+						}; /*else if(commandArr.length > 3) {
+							//INSERT into prices (item_name,price_refb,price_keyb,price_refs,price_keys,id) values ('name',prb,prs,pkb,pks,id,namecolor);
+							con.query("INSERT into prices (item_name,item_id,) values ('name',prb,prs,pkb,pks,id,namecolor);", function (err, result) {
+								if (err) throw err;
+								
+							}
+						};*/
+					};
+				};break;
+			};
+		};break;
 	}
 });
 
