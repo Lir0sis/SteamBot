@@ -134,8 +134,8 @@ var positiveArr = arr.filter(function(number) {
 client.logOn(logOnOptions);
 
 client.on('loggedOn', () => {
-	client.setPersona(SteamUser.EPersonaState.Offline);
-	//client.gamesPlayed(['Trading',440]);
+	client.setPersona(SteamUser.EPersonaState.Online);
+	client.gamesPlayed(['Trading',440]);
 	console.log(`Logged in Steam account!`);
 });
 
