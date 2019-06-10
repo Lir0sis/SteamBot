@@ -1,0 +1,27 @@
+{
+  "name": "steambot",
+  "version": "1.0.0",
+  "description": "ok",
+  "main": "bot.js",
+  "scripts": {
+    "test": "test",
+    "start": "node bot.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lir0sis/SteamBot.git"
+  },
+  "author": "lir0sis",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Lir0sis/SteamBot/issues"
+  },
+  "homepage": "https://github.com/Lir0sis/SteamBot#readme",
+  "dependencies": {
+    "mysql": "^2.17.1",
+    "steam-totp": "^2.1.0",
+    "steam-tradeoffer-manager": "^2.9.5",
+    "steam-user": "^4.11.0",
+    "steamcommunity": "^3.40.0"
+  }
+}

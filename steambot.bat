@@ -1,5 +1,5 @@
 @echo off
 title SteamBot - SteamBot
-node bot.js
+npm start
 @echo on
 pause

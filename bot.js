@@ -113,22 +113,27 @@ const items_give = (offer) => {
 };
 
 const glue_sep_arr = (array, separator) => {
-	const filt_arr = filt_array(array, separator);
-	let lastIndex = array.indexOf(filt_arr[filt_arr.length-1]);
-	let removed_arr = array.slice(3, lastIndex+1);
-	let removed_arr_end = array.slice(lastIndex+1,array.length);
-	let removed_arr_begin = array.slice(0,3);
-	let string_arr = removed_arr.join(" ");
-	let new_arr=[];
-	Array.prototype.push.apply(new_arr, removed_arr_begin);
-	new_arr.push(string_arr.slice(1,string_arr.length-1));
-	Array.prototype.push.apply(new_arr, removed_arr_end);
-	return new_arr;
+	const resultArr = filter_arr(array, separator);
+	let lstIndx = resultArr.lstIndx;
+	let fstIndx = resultArr.fstIndx;
+	let removed_array = array.slice(fstIndx, lstIndx+1);
+	let removed_array_end=[];
+	if (lstIndx !== array.length-1) removed_array_end = array.slice(lstIndx+1,array.length);
+	let removed_array_begin = array.slice(0,fstIndx);
+	let removed_str = removed_array.join(" ");
+	removed_array_begin.push(removed_str.slice(1,removed_str.length-1));
+	Array.prototype.push.apply(removed_array_begin, removed_array_end);
+	let new_array = removed_array_begin;
+	return { array: new_array, lstId: lstIndx, fstId: fstIndx };
 };
 
-const filt_array = (array,separator) => array.filter(item => {
-		return item.indexOf(separator) !== -1
-	});
+const filter_arr = (array,separator) => {
+	const array_filtered = array.filter(item => item.indexOf(separator) !== -1);
+	let lastIndex = array.indexOf(array_filtered[array_filtered.length-1]);
+	let firstIndex = array.indexOf(array_filtered[0]);
+	if (firstIndex !== lastIndex) {return { array: array_filtered, lstIndx: lastIndex, fstIndx: firstIndex
+	};} else {return{array: array_filtered, Indx: lastIndex};}
+};
 //----------------------------------------------------------------
 
 client.logOn(logOnOptions);
@@ -176,18 +181,19 @@ client.on("friendMessage", function(steamID, message) {
 				case 'add':{
 					if (commandArr.length == 2){ client.chatMessage(steamID, '/code How to: !bot add <table> '); client.chatMessage(steamID, '/code Example: !bot add prices ... '); };
 					if (commandArr[2] == 'prices'){
-						const array_filtered_length = filt_array(commandArr,"'").length;
+						const array_filtered_length = filter_arr(commandArr,"'").array.length;
 						if (array_filtered_length > 1){
-							commandArr = glue_sep_arr(commandArr,"'");
+							commandArr = glue_sep_arr(commandArr,"'").array;
 						}else if (array_filtered_length === 1) {
-							commandArr[3] = commandArr[3].slice(1,commandArr[3].length-1);
-							console.log(commandArr[3]);	
+							let Index = filter_arr(commandArr,"'").Indx;
+							commandArr[Index] = commandArr[Index].slice(1,commandArr[Index].length-1);
+							console.log(commandArr[Index]);	
 						};
 						if (commandArr.length == 3){ 
 							client.chatMessage(steamID, '/code How to: !bot add prices <item_name> <item_id> <ref_buy> <ref_sell> <key_buy> <key_sell> <item_name_color> <...>');
 							client.chatMessage(steamID, '/code Example: !bot add prices \'Mann Co. Supply Crate Key\' 5021 51.55 51.77 0 0 0 ');
 						} else if(commandArr.length > 9) {
-							con.query("INSERT into prices (item_name,item_id,ref_buy,ref_sell,key_buy,key_sell,item_name_color) values ('"+ commandArr[3] +"',"+ commandArr[4] +","+ commandArr[5] +","+ commandArr[6] +","+ commandArr[7] +","+ commandArr[8] +","+ commandArr[9]+");", function (err, result) {
+							con.query("INSERT into prices (item_name,item_id,ref_buy,ref_sell,key_buy,key_sell,item_name_color) values ('"+ commandArr[3] +"',"+ commandArr[4] +","+ commandArr[5] +","+ commandArr[6] +","+ commandArr[7] +","+ commandArr[8] +",'"+ commandArr[9]+"');", function (err, result) {
 								if (err) throw err;
 								client.chatMessage(steamID,'/pre Added a record to the table prices.');
 							});
