@@ -8,5 +8,6 @@
 	"ipSQL":"sql_serverIP",
 	"userSQL":"sql_username",
 	"passSQL":"sql_password",
-	"portSQL":"port"
+	"portSQL":"port",
+	"steamApiKey":"your_account_steam_APIkey"
 }

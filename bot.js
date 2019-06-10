@@ -4,6 +4,7 @@ const TradeOfferManager = require('steam-tradeoffer-manager');
 const SteamTotp = require('steam-totp');
 const mysql = require('mysql');
 const config = require('./config.json');
+const steamuserinfo = require('steam-userinfo');
 //-------------------------------------------------------------------
 const client = new SteamUser();
 const community = new SteamCommunity();
@@ -122,7 +123,7 @@ const glue_sep_arr = (array, separator) => {
 	let removed_array_begin = array.slice(0,fstIndx);
 	let removed_str = removed_array.join(" ");
 	removed_array_begin.push(removed_str.slice(1,removed_str.length-1));
-	Array.prototype.push.apply(removed_array_begin, removed_array_end);
+	removed_array_begin = removed_array_begin.concat(removed_array_end);
 	let new_array = removed_array_begin;
 	return { array: new_array, lstId: lstIndx, fstId: fstIndx };
 };
@@ -134,13 +135,18 @@ const filter_arr = (array,separator) => {
 	if (firstIndex !== lastIndex) {return { array: array_filtered, lstIndx: lastIndex, fstIndx: firstIndex
 	};} else {return{array: array_filtered, Indx: lastIndex};}
 };
+
 //----------------------------------------------------------------
 
 client.logOn(logOnOptions);
 
+steamuserinfo.setup(config.steamApiKey);
+
+setTimeout(sqlconnect, 1000);
+
 client.on('loggedOn', () => {
-	client.setPersona(SteamUser.EPersonaState.Offline);
-	//client.gamesPlayed(['Trading',440]);
+	client.setPersona(SteamUser.EPersonaState.Online);
+	client.gamesPlayed(440);
 	console.log(`Logged in Steam account!`);
 });
 
@@ -152,8 +158,6 @@ client.on('webSession', (sessionid, cookies) => {
 	console.log(`Connected to Steam community. Started Confirmations checker every ${timech} ms`);
 });
 
-setTimeout(sqlconnect, 1000);
-
 manager.on('newOffer', offer => {
 	if (offer.partner.getSteamID64() === config.botOwner) { 
 		acceptOffer(offer,"Bot owner",offer.status);  
@@ -163,9 +167,16 @@ manager.on('newOffer', offer => {
 	}
 });
 
-client.on("friendMessage", function(steamID, message) {
+client.on("friendMessage", function(steamID, message) {	
 	let commandArr = [];
 	commandArr = message.split(" ");
+	steamuserinfo.getUserInfo(steamID, function(error, data){
+		if(error) throw error;
+		//process the data
+		const responseInfo = JSON.stringify(data.response);
+		console.log(responseInfo);
+		console.log(responseInfo);
+	});
 	switch(commandArr[0]){
 		case '!bot':
 		{

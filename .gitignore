@@ -64,3 +64,4 @@ config.json
 sql/sqldb.js
 sql/runsql.bat
 GIT_COMMANDS.txt
+startbot_js.bat
