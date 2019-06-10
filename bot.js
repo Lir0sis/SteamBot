@@ -25,27 +25,29 @@ const logOnOptions = {
 	twoFactorCode: SteamTotp.generateAuthCode(config.sharedSecret)
 };
 //---------------------------------------------------------------------
-function sendRandomItem(partner) {
+const sendRandomItem = (partner) => {
 	const appid = 440;
 	const contextid = 2;
 	const offer = manager.createOffer(partner);
 	manager.loadInventory(appid, contextid, true, (err, myInv) => { if (err) { console.log(err); } 
-	else {
-		const myItem = myInv[Math.floor(Math.random() * myInv.length - 1)];
-		offer.addMyItem(myItem);
-		manager.loadUserInventory(partner, appid, contextid, true, (err, theirInv) => {
-			if (err) {
-				console.log(err);
-			} else {
-				const theirItem = theirInv[Math.floor(Math.random() * theirInv.length - 1)];
-				offer.addTheirItem(theirItem);
-				offer.setMessage(`Думаю тебе понравиться мой ${myItem.name} за твой ${theirItem.name}.`);
-				console.log(myItem);
-				offer.send((err, status) => { if (err) { console.log(err); } else { console.log(`Sent a random item offer. Status: ${status}.`); }});
-			  }});
-		}});
+		else {
+			const myItem = myInv[Math.floor(Math.random() * myInv.length - 1)];
+			offer.addMyItem(myItem);
+			manager.loadUserInventory(partner, appid, contextid, true, (err, theirInv) => {
+				if (err) {
+					console.log(err);
+				} else {
+					const theirItem = theirInv[Math.floor(Math.random() * theirInv.length - 1)];
+					offer.addTheirItem(theirItem);
+					offer.setMessage(`Думаю тебе понравиться мой ${myItem.name} за твой ${theirItem.name}.`);
+					console.log(myItem);
+					offer.send((err, status) => { if (err) { console.log(err); } else { console.log(`Sent a random item offer. Status: ${status}.`); }});
+				}
+			});
+		}
+	});
 };
-function checkItem(steamid,appid,contextid,myItem){
+const checkItem = (steamid,appid,contextid,myItem) => {
 	manager.loadUserInventory(steamid, appid, contextid, true, (err, theirInv) => {
 			if (err) {
 				console.log(err);
@@ -55,21 +57,24 @@ function checkItem(steamid,appid,contextid,myItem){
 				offer.send((err, status) => { if (err) { console.log(err); } else { console.log(`Sent a random item offer. Status: ${status}.`); }});
 			  }});
 };
-function acceptOffer(offer,reason,status) {
+
+const acceptOffer = (offer,reason,status) => {
 	offer.accept((err) => {
 		if (err) console.log("Error occured:" + err)
 		else
 		console.log(`Accepted offer successfully. Status: ${status}. Reason: ${reason}`);
 	});
 };
-function declineOffer(offer,reason,status) {
+
+const declineOffer = (offer,reason,status) => {
 	offer.decline((err) => {
 		if (err) console.log("Error occured:" + err);
 		else
 		console.log(`Declined offer successfully. Status: ${status}. Reason: ${reason}`);
 	});
 };
-function processOffer(offer){
+
+const processOffer = (offer) => {
 	if (offer.Glitched() || offer.state === 11) {
 		declineOffer(offer,'Glitched',offer.status);
 	} else if (offer.partner.getSteamID64() === config.botOwner) { acceptOffer(offer,"Bot owner",offer.status); }
@@ -83,7 +88,7 @@ function processOffer(offer){
 		}
 	}	
 };
-function sqlconnect(){
+const sqlconnect = () => {
 	try {
 		con.connect(function(err) {
 			if (err) throw err
@@ -92,25 +97,23 @@ function sqlconnect(){
 	}
 	catch(e){ console.log('Error happened');}
 };
-function items_receive(offer){
+
+const items_receive = (offer) => {
 	console.log('Received:');
 	offer.itemsToReceive.forEach(function(item) {
 		console.log("Name: " + item.market_name + "   Quality:" + item.app_data.quality);
 	});
 };
-function items_give(offer){
+
+const items_give = (offer) => {
 	console.log('Gived:');
 	offer.itemsToGive.forEach(function(item) {
 		console.log("Name: " + item.market_name + "   Quality:" + item.app_data.quality);
 	});
 };
 
-// const glue_sep_arr = (&array, separator) => {
-
 const glue_sep_arr = (array, separator) => {
-	const filt_arr = array.filter(item => {
-		return item.indexOf(separator) !== -1
-	});
+	const filt_arr = filt_array(array, separator);
 	let lastIndex = array.indexOf(filt_arr[filt_arr.length-1]);
 	let removed_arr = array.slice(3, lastIndex+1);
 	let removed_arr_end = array.slice(lastIndex+1,array.length);
@@ -120,57 +123,45 @@ const glue_sep_arr = (array, separator) => {
 	Array.prototype.push.apply(new_arr, removed_arr_begin);
 	new_arr.push(string_arr.slice(1,string_arr.length-1));
 	Array.prototype.push.apply(new_arr, removed_arr_end);
-	console.log(array);
 	return new_arr;
 };
-/*
-var positiveArr = arr.filter(function(number) {
-  return number > 0;
-});
 
-*/
+const filt_array = (array,separator) => array.filter(item => {
+		return item.indexOf(separator) !== -1
+	});
 //----------------------------------------------------------------
 
 client.logOn(logOnOptions);
 
 client.on('loggedOn', () => {
-	client.setPersona(SteamUser.EPersonaState.Online);
-	client.gamesPlayed(['Trading',440]);
+	client.setPersona(SteamUser.EPersonaState.Offline);
+	//client.gamesPlayed(['Trading',440]);
 	console.log(`Logged in Steam account!`);
 });
 
 client.on('webSession', (sessionid, cookies) => {
-  manager.setCookies(cookies);
-  community.setCookies(cookies);
-  var timech = 5000;
-  community.startConfirmationChecker(timech, config.identitySecret);
-  console.log(`Connected to Steam community. Started Confirmations checker every ${timech} ms`);
+	manager.setCookies(cookies);
+	community.setCookies(cookies);
+	let timech = 5000;
+	community.startConfirmationChecker(timech, config.identitySecret);
+	console.log(`Connected to Steam community. Started Confirmations checker every ${timech} ms`);
 });
 
 setTimeout(sqlconnect, 1000);
 
 manager.on('newOffer', offer => {
-  if (offer.partner.getSteamID64() === config.botOwner) { 
-	acceptOffer(offer,"Bot owner",offer.status);  
-	items_receive(offer);
-	items_give(offer);
-	console.log(offer.itemsToReceive);
-  }
-	});
-
+	if (offer.partner.getSteamID64() === config.botOwner) { 
+		acceptOffer(offer,"Bot owner",offer.status);  
+		items_receive(offer);
+		items_give(offer);
+		console.log(offer.itemsToReceive);
+	}
+});
 
 client.on("friendMessage", function(steamID, message) {
 	let commandArr = [];
 	commandArr = message.split(" ");
 	switch(commandArr[0]){
-		/*case '!db check':
-		{
-			con.query("select * from prices;", function (err, result) {
-				if (err) throw err;
-			try {client.chatMessage(steamID, result[1]); } catch(e){ client.chatMessage(steamID, 'end of the table'); };
-				console.log(steamID + " checked database");
-			});
-		};break;*/
 		case '!bot':
 		{
 			switch(commandArr[1]){
@@ -185,14 +176,17 @@ client.on("friendMessage", function(steamID, message) {
 				case 'add':{
 					if (commandArr.length == 2){ client.chatMessage(steamID, '/code How to: !bot add <table> '); client.chatMessage(steamID, '/code Example: !bot add prices ... '); };
 					if (commandArr[2] == 'prices'){
-						if (commandArr.indexOf("'") !== -1) {
+						const array_filtered_length = filt_array(commandArr,"'").length;
+						if (array_filtered_length > 1){
 							commandArr = glue_sep_arr(commandArr,"'");
+						}else if (array_filtered_length === 1) {
+							commandArr[3] = commandArr[3].slice(1,commandArr[3].length-1);
+							console.log(commandArr[3]);	
 						};
 						if (commandArr.length == 3){ 
 							client.chatMessage(steamID, '/code How to: !bot add prices <item_name> <item_id> <ref_buy> <ref_sell> <key_buy> <key_sell> <item_name_color> <...>');
 							client.chatMessage(steamID, '/code Example: !bot add prices \'Mann Co. Supply Crate Key\' 5021 51.55 51.77 0 0 0 ');
 						} else if(commandArr.length > 9) {
-							//INSERT into prices (item_name,price_refb,price_keyb,price_refs,price_keys,id) values ('name',prb,prs,pkb,pks,id,namecolor);
 							con.query("INSERT into prices (item_name,item_id,ref_buy,ref_sell,key_buy,key_sell,item_name_color) values ('"+ commandArr[3] +"',"+ commandArr[4] +","+ commandArr[5] +","+ commandArr[6] +","+ commandArr[7] +","+ commandArr[8] +","+ commandArr[9]+");", function (err, result) {
 								if (err) throw err;
 								client.chatMessage(steamID,'/pre Added a record to the table prices.');
@@ -203,10 +197,13 @@ client.on("friendMessage", function(steamID, message) {
 						}
 					};
 				};break;
+				case 'update':{
+					
+				};break;
 			};
 		};break;
 	}
 });
-
+//INSERT into prices (item_name,price_refb,price_keyb,price_refs,price_keys,id) values ('name',prb,prs,pkb,pks,id,namecolor);
 
 
