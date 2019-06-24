@@ -1,4 +1,4 @@
-# SteamBot
+# SteamBot (abandoned)
 It's a bot for steam-only purpose
 
 # Setup
