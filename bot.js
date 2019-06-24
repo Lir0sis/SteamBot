@@ -1,10 +1,11 @@
-const SteamUser = require('steam-user');
+﻿const SteamUser = require('steam-user');
 const SteamCommunity = require('steamcommunity');
 const TradeOfferManager = require('steam-tradeoffer-manager');
 const SteamTotp = require('steam-totp');
 const mysql = require('mysql');
+const steamUserInfo = require('steam-userinfo');
 const config = require('./config.json');
-const steamuserinfo = require('steam-userinfo');
+require('colors');
 //-------------------------------------------------------------------
 const client = new SteamUser();
 const community = new SteamCommunity();
@@ -89,7 +90,7 @@ const processOffer = (offer) => {
 		}
 	}	
 };
-const sqlconnect = () => {
+const sqlConnect = () => {
 	try {
 		con.connect(function(err) {
 			if (err) throw err
@@ -99,53 +100,60 @@ const sqlconnect = () => {
 	catch(e){ console.log('Error happened');}
 };
 
-const items_receive = (offer) => {
-	console.log('Received:');
-	offer.itemsToReceive.forEach(function(item) {
-		console.log("Name: " + item.market_name + "   Quality:" + item.app_data.quality);
+
+const itemsToReceive = (offer) => {
+	let messageBegin = "Received:".underline.white;
+	let tradeMessage = "";
+	if (offer.itemsToReceive !== undefined) offer.itemsToReceive.forEach(function(item) {
+		tradeMessage += " " + item.market_name + "(" + item.app_data.quality + ")" + ",";
 	});
+	if (offer.itemsToReceive === undefined) tradeMessage = 'Nothing to receive';
+	console.log(messageBegin + tradeMessage.green);
 };
 
-const items_give = (offer) => {
-	console.log('Gived:');
-	offer.itemsToGive.forEach(function(item) {
-		console.log("Name: " + item.market_name + "   Quality:" + item.app_data.quality);
+const itemsToGive = (offer) => {
+	let messageBegin = 'Lost:'.underline.white;
+	let tradeMessage = "";
+	if (offer.itemsToGive !== undefined) offer.itemsToGive.forEach(function(item) {
+		tradeMessage += " " + item.market_name + "(" + item.app_data.quality + ")" + ",";
 	});
+	if (tradeMessage === undefined) tradeMessage = ' Nothing to give';
+	console.log(messageBegin + tradeMessage.orange);
 };
 
-const glue_sep_arr = (array, separator) => {
-	const resultArr = filter_arr(array, separator);
+const glueArrayElements = (array, separator) => {
+	const resultArr = filterArray(array, separator);
 	let lstIndx = resultArr.lstIndx;
 	let fstIndx = resultArr.fstIndx;
-	let removed_array = array.slice(fstIndx, lstIndx+1);
-	let removed_array_end=[];
-	if (lstIndx !== array.length-1) removed_array_end = array.slice(lstIndx+1,array.length);
-	let removed_array_begin = array.slice(0,fstIndx);
-	let removed_str = removed_array.join(" ");
-	removed_array_begin.push(removed_str.slice(1,removed_str.length-1));
-	removed_array_begin = removed_array_begin.concat(removed_array_end);
-	let new_array = removed_array_begin;
-	return { array: new_array, lstId: lstIndx, fstId: fstIndx };
+	let removedArray = array.slice(fstIndx, lstIndx+1);
+	let removedArrayEnd=[];
+	if (lstIndx !== array.length-1) removedArrayEnd = array.slice(lstIndx+1,array.length);
+	let removedArrayBegin = array.slice(0,fstIndx);
+	let removedString = removedArray.join(" ");
+	removedArrayBegin.push(removedString.slice(1,removedString.length-1));
+	removedArrayBegin = removedArrayBegin.concat(removedArrayEnd);
+	let newArray = removedArrayBegin;
+	return { array: newArray, lstId: lstIndx, fstId: fstIndx };
 };
 
-const filter_arr = (array,separator) => {
-	const array_filtered = array.filter(item => item.indexOf(separator) !== -1);
-	let lastIndex = array.indexOf(array_filtered[array_filtered.length-1]);
-	let firstIndex = array.indexOf(array_filtered[0]);
-	if (firstIndex !== lastIndex) {return { array: array_filtered, lstIndx: lastIndex, fstIndx: firstIndex
-	};} else {return{array: array_filtered, Indx: lastIndex};}
+const filterArray = (array,separator) => {
+	const filteredArray = array.filter(item => item.indexOf(separator) !== -1);
+	let lastIndex = array.indexOf(filteredArray[filteredArray.length-1]);
+	let firstIndex = array.indexOf(filteredArray[0]);
+	if (firstIndex !== lastIndex) {return { array: filteredArray, lstIndx: lastIndex, fstIndx: firstIndex
+	};} else {return{array: filteredArray, Indx: lastIndex};}
 };
 
 //----------------------------------------------------------------
 
 client.logOn(logOnOptions);
 
-steamuserinfo.setup(config.steamApiKey);
+//steamUserInfo.setup(config.steamApiKey);
 
-setTimeout(sqlconnect, 1000);
+setTimeout(sqlConnect, 1000);
 
 client.on('loggedOn', () => {
-	client.setPersona(SteamUser.EPersonaState.Online);
+	client.setPersona(SteamUser.EPersonaState.Offline);
 	client.gamesPlayed(440);
 	console.log(`Logged in Steam account!`);
 });
@@ -161,61 +169,132 @@ client.on('webSession', (sessionid, cookies) => {
 manager.on('newOffer', offer => {
 	if (offer.partner.getSteamID64() === config.botOwner) { 
 		acceptOffer(offer,"Bot owner",offer.status);  
-		items_receive(offer);
-		items_give(offer);
-		console.log(offer.itemsToReceive);
+		console.log('-----------------New-Offer-----------------'.cyan);
+		itemsToReceive(offer);
+		itemsToGive(offer);
 	}
 });
 
 client.on("friendMessage", function(steamID, message) {	
-	let commandArr = [];
-	commandArr = message.split(" ");
-	steamuserinfo.getUserInfo(steamID, function(error, data){
+	let cmdArray = [];
+	let steamUserNameT;
+	cmdArray = message.split(" ");
+
+	/*
+	steamUserInfo.getUserInfo(steamID, function(error, data, steamUserNameT){
 		if(error) throw error;
-		//process the data
-		const responseInfo = JSON.stringify(data.response);
-		console.log(responseInfo);
-		console.log(responseInfo);
+		steamUserNameT = JSON.stringify(data.response);
 	});
-	switch(commandArr[0]){
+	*/
+
+	switch(cmdArray[0]){
 		case '!bot':
 		{
-			switch(commandArr[1]){
+			switch(cmdArray[1]){
 				case 'prices':{
-					con.query("select * from prices;", function (err, result) {
-						if (err) throw err;
-						result.forEach(function(price){
-							client.chatMessage(steamID, '/code ' + price.item_name + '(' + price.item_id + '): Buying for ' + price.key_buy + ' key ' + price.ref_buy + ' ref / Selling for ' + price.key_sell + ' key ' + price.ref_sell + ' ref');
-						});
-					});
-				};break;
-				case 'add':{
-					if (commandArr.length == 2){ client.chatMessage(steamID, '/code How to: !bot add <table> '); client.chatMessage(steamID, '/code Example: !bot add prices ... '); };
-					if (commandArr[2] == 'prices'){
-						const array_filtered_length = filter_arr(commandArr,"'").array.length;
-						if (array_filtered_length > 1){
-							commandArr = glue_sep_arr(commandArr,"'").array;
-						}else if (array_filtered_length === 1) {
-							let Index = filter_arr(commandArr,"'").Indx;
-							commandArr[Index] = commandArr[Index].slice(1,commandArr[Index].length-1);
-							console.log(commandArr[Index]);	
-						};
-						if (commandArr.length == 3){ 
-							client.chatMessage(steamID, '/code How to: !bot add prices <item_name> <item_id> <ref_buy> <ref_sell> <key_buy> <key_sell> <item_name_color> <...>');
-							client.chatMessage(steamID, '/code Example: !bot add prices \'Mann Co. Supply Crate Key\' 5021 51.55 51.77 0 0 0 ');
-						} else if(commandArr.length > 9) {
-							con.query("INSERT into prices (item_name,item_id,ref_buy,ref_sell,key_buy,key_sell,item_name_color) values ('"+ commandArr[3] +"',"+ commandArr[4] +","+ commandArr[5] +","+ commandArr[6] +","+ commandArr[7] +","+ commandArr[8] +",'"+ commandArr[9]+"');", function (err, result) {
-								if (err) throw err;
-								client.chatMessage(steamID,'/pre Added a record to the table prices.');
+					if (cmdArray.length === 2){
+						con.query("select * from prices;", function (err, result) {
+							if (err) throw err;
+							result.forEach(function(price){
+								client.chatMessage(steamID, '/quote ' + price.item_name + '(' + price.item_id + '): Buying for ' + price.key_buy + 
+								' key ' + price.ref_buy + ' ref / Selling for ' + price.key_sell + ' key ' + price.ref_sell + ' ref');
 							});
-						};
-						if (commandArr.length <10 && commandArr.length >3){
-							client.chatMessage(steamID,'/pre Not enough arguments.');
-						}
+						});
+					console.log(steamUserNameT + "(" + steamID + ") checked prices");
+					} else if (cmdArray[2] === 'columns'){
+						client.chatMessage(steamID,'/quote Columns are: item_id, item_name, ref_buy, ref_sell, key_buy, key_sell, item_name_color');
+						//console.log(steamUserNameT + "(" + steamID + ") checked prices' columns");
 					};
 				};break;
+				case 'add':{
+					if (cmdArray.length === 2){ 
+						client.chatMessage(steamID, '/quote How to: /quote add <table> '); 
+						client.chatMessage(steamID, '/quote Example: /quote add prices ... '); 
+					};
+					if ( cmdArray[2] === 'prices'){
+						const filteredArrayLength = filterArray(cmdArray,"'").array.length;
+						if ( filteredArrayLength > 1 ){
+							cmdArray = glueArrayElements(cmdArray,"'").array;
+						} else if ( filteredArrayLength === 1 ) {
+
+							let Index = filterArray(cmdArray,"'").Indx;
+							cmdArray[Index] = cmdArray[Index].slice(1,cmdArray[Index].length-1);
+							console.log(cmdArray[Index]);	
+
+						};
+						if ( cmdArray.length === 3 ){ 
+
+							client.chatMessage(steamID, '/quote How to: /quote add prices <item_name> <item_id> <ref_buy>'+ 
+							'<ref_sell> <key_buy> <key_sell> <item_name_color> <...>');
+							client.chatMessage(steamID, '/quote Example: /quote add prices \'Mann Co. Supply Crate Key\' 5021 51.55 51.77 0 0 0 ');
+
+						} else if(cmdArray.length > 9) {
+							con.query("INSERT into prices (item_name,item_id,ref_buy,ref_sell,key_buy,key_sell,item_name_color)" + 
+							" values ('"+ cmdArray[3] +"',"+ cmdArray[4] +","+ cmdArray[5] +","+ cmdArray[6] +
+							","+ cmdArray[7] +","+ cmdArray[8] + ",'"+ cmdArray[9]+"');", function (err, result) {
+
+								if (err) throw err;
+								client.chatMessage(steamID,'/quote Added a record to the table prices.');
+
+							});
+
+						};
+
+						if (cmdArray.length <10 && cmdArray.length >3){
+							client.chatMessage(steamID,'/quote Not enough arguments.');
+
+						}
+
+					};
+
+				};break;
 				case 'update':{
+
+					if (cmdArray.length === 2){ 
+						client.chatMessage(steamID, '/quote How to: /quote update <table> '); 
+						client.chatMessage(steamID, '/quote Example: /quote update prices ... '); 
+					};
 					
+					if ( cmdArray[2] === 'prices'){
+					
+						const filteredArrayLength = filterArray(cmdArray,"'").array.length;
+						if ( filteredArrayLength > 1 ){
+							cmdArray = glueArrayElements(cmdArray,"'").array;
+						} else if ( filteredArrayLength === 1 ) {
+
+							let Index = filterArray(cmdArray,"'").Indx;
+							cmdArray[Index] = cmdArray[Index].slice(1,cmdArray[Index].length-1);
+							console.log(cmdArray[Index]);	
+
+						};
+						if ( cmdArray.length === 3 ){ 
+
+							client.chatMessage(steamID, '/quote How to: /quote update prices <item_id_value> <filt_param> <filt_param_value> ' + 
+							'<param_to_update> <param_to_update_value>');
+							client.chatMessage(steamID, '/quote Example: /quote update prices 5021 item_name_color #FFD700 item_name \'Mann Co. Supply Crate Key\''+
+							' - filters item by name color and updates item\'s name with 5021 id');
+
+						} else if(cmdArray.length > 7) {
+
+							con.query("Update prices set " + cmdArray[6]+"='"+ cmdArray[7]+ "'" + " where item_id='"+ cmdArray[3] +"' and "+ cmdArray[4]+ 
+							"='"+ cmdArray[5] +"';", function (err, result) {
+								if (err) throw err;
+								client.chatMessage(steamID,'/quote Updated record.');
+							});
+						};
+
+						if (cmdArray.length <8 && cmdArray.length >3){
+							client.chatMessage(steamID,'/quote Not enough arguments.');
+							client.chatMessage(steamID,cmdArray.join(','));
+						}
+						if (cmdArray.length > 8){
+							client.chatMessage(steamID,'/quote Too much arguments');
+							client.chatMessage(steamID,cmdArray.join(','));
+						}
+
+						
+					};
+
 				};break;
 			};
 		};break;
